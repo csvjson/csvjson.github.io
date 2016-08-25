@@ -1,0 +1,349 @@
+<!doctype html>
+
+<head>
+	<meta charset="utf-8">
+	<meta name='viewport' content='width=device-width, initial-scale=1'>
+	<style>
+	* {
+		box-sizing: border-box;
+	}
+	/* basic stylings ------------------------------------------ */
+	
+	html, body, #editor {
+	  margin: 0;
+	  height: 100%;
+	  width:100%;
+	  font-family: 'Helvetica Neue', Arial, sans-serif;
+	  color: #333;
+	}
+	#logo{
+		position:absolute;
+		top: 7px;
+		left:10px;
+	}
+	#logo h1{
+		font-size: 14px;
+		letter-spacing: 1px;
+		color: #1C90F3;
+		margin: 0;
+		padding: 0;
+	}
+	#logo p{
+		font-size: 10px;
+		font-style: italic;
+		font-weight:bold;
+		margin: 0;
+		padding: 0;
+	}
+	.pane{
+		display: inline-block;
+		width: 50%;
+		float: left;
+		height: 100%;
+		margin:auto;
+		vertical-align: top;
+		-webkit-box-sizing: border-box;
+		-moz-box-sizing: border-box;
+		box-sizing: border-box;
+	}
+	#pane1{
+		border-right: 1px solid #ccc;
+	}
+	.io-csv {
+		width:100%;
+		height:100%;
+		border: none;
+		resize: none;
+		outline: none;
+		font-size: 14px;
+		font-family: 'Monaco', courier, monospace;
+		padding: 20px;
+	}
+
+	.header {
+		display: inline-block;
+		margin: 0 0 5px 0;
+		width:100%;
+		background-color: #fff;
+	}
+	.header .tabs{
+		list-style-type: none;
+		margin:0 10px 0 0;
+		padding:0;
+		float:right;
+	}
+	.header .tabs li{
+		display:inline-block;
+		padding: 8px 10px;
+		margin: 10px;
+		min-width: 120px;
+		font-size: 1.2em;
+		text-align:center;
+	    cursor:pointer;
+	    border-bottom: solid 3px transparent;
+	    color: #999;
+	}
+	.header .tabs li.active{
+		border-bottom: solid 3px #1C90F3;
+		color: #1C90F3;
+		cursor:default;
+	}
+	.header .tabs li:hover{
+		border-bottom: solid 3px #1C90F3;
+		color: #1C90F3;
+	}
+
+	.io-area{
+		display: none;
+		border:none;
+		resize: none;
+	  	outline: none;
+		width:100%;
+		height:100%;
+		vertical-align: top;
+		-webkit-box-sizing: border-box;
+		-moz-box-sizing: border-box;
+		box-sizing: border-box;
+		padding: 0 20px;
+		font-size: 14px;
+		font-family: 'Monaco', courier, monospace;
+	}
+	.io-source{
+		
+	  	
+	}
+	.io-preview{
+		margin-top: -15px;
+	}
+	.io-area.active{
+		display:inline-block;
+	}
+	/* form starting stylings ------------------------------- */
+	
+	
+	/*************************************************
+*	Mobile Portrait								 *
+*************************************************/
+
+	@media (max-width: 480px) {
+		body{
+			font-size: 65%;
+		}
+		#pane2 {
+			display:none;
+		}
+		#pane1 {
+			display:block;
+			width: 100%;
+		}
+		.header .tabs li{
+			padding: 8px 2px;
+			margin: 10px;
+			min-width: 50px;
+		}
+	}
+	@media (min-width: 479px) and (max-width: 767px) {
+		body{
+			font-size: 80%;
+		}
+		#pane2 {
+			display:none;
+		}
+		#pane1 {
+			display:block;
+			width: 100%;
+		}
+		.header .tabs li{
+			padding: 8px 2px;
+			margin: 10px;
+			min-width: 80px;
+		}
+	}
+	@media (min-width: 768px) and (max-width: 991px) {
+    	body{
+			font-size: 80%;
+		}
+		#pane2 {
+			display:none;
+		}
+		#pane1 {
+			display:block;
+			width: 100%;
+		}
+		.header .tabs li{
+			padding: 8px 2px;
+			margin: 10px;
+			min-width: 90px;
+		}
+    }
+    @media (min-width: 992px) and (max-width: 1100px) {
+    	body{
+			font-size: 80%;
+		}
+		.header .tabs li{
+			padding: 8px 2px;
+			margin: 10px 5px;
+			min-width: 100px;
+		}
+    }
+
+	</style>
+	
+	<script src="https://code.jquery.com/jquery-1.12.0.min.js"></script>
+	<script type="text/javascript">
+		$(function() {
+			$('#pane1 .io-csv').focus();
+			$('.io-csv').on('input propertychange', function(){
+				$('.io-csv').val($(this).val());
+				var data = csv2array($(this).val());
+				$('.io-array').val(JSON.stringify(data));
+				$('.io-object').val(array2obj(data));
+			});
+			$('.io-array').on('input propertychange', function(){
+				$('.io-array').val($(this).val());
+				var data = json2csv($(this).val());
+				var arr = JSON.parse($(this).val());
+				$('.io-object').val(array2obj(arr));
+				$('.io-csv').val(data);
+			});
+			$('.io-object').on('input propertychange', function(){
+				$('.io-object').val($(this).val());
+				var data = json2csv($(this).val());
+				var arr = csv2array(data);
+				$('.io-array').val(JSON.stringify(arr));
+				$('.io-csv').val(data);
+			});
+			$('.tabs li').on('click', function(){
+				if(!$(this).hasClass('active')){
+					$(this).parent().find('li').removeClass('active');
+					$(this).addClass('active');
+					var targetParent = $(this).parents('.pane');
+					targetParent.find('.io-area').removeClass('active');
+					if($(this).attr('id') == "tab-edit"){
+						targetParent.find('.io-csv').addClass('active');
+					} else if($(this).attr('id') == "tab-array"){ 
+						targetParent.find('.io-array').addClass('active');
+					}else{
+						targetParent.find('.io-object').addClass('active');
+					}
+				}
+			});
+		});
+
+		function array2obj(array) {
+			//convert javascript array to javascript object
+		    var objArray = [];
+		    for (var i = 1; i < array.length; i++) {
+		        objArray[i - 1] = {};
+		        for (var k = 0; k < array[0].length && k < array[i].length; k++) {
+		            var key = array[0][k];
+		            objArray[i - 1][key] = array[i][k]
+		        }
+		    }
+
+		    var json = JSON.stringify(objArray);
+		    var str = json.replace(/},/g, "},\r\n");
+
+		    return str;
+		}
+
+		function csv2array(strData, strDelimiter) {
+			// Check to see if the delimiter is defined. If not,
+			// then default to comma.
+			strDelimiter = (strDelimiter || ",");
+			// Create a regular expression to parse the CSV values.
+			var objPattern = new RegExp((
+			// Delimiters.
+			"(\\" + strDelimiter + "|\\r?\\n|\\r|^)" +
+			// Quoted fields.
+			"(?:\"([^\"]*(?:\"\"[^\"]*)*)\"|" +
+			// Standard fields.
+			"([^\"\\" + strDelimiter + "\\r\\n]*))"), "gi");
+			// Create an array to hold our data. Give the array
+			// a default empty first row.
+			var arrData = [[]];
+			// Create an array to hold our individual pattern
+			// matching groups.
+			var arrMatches = null;
+			// Keep looping over the regular expression matches
+			// until we can no longer find a match.
+			while (arrMatches = objPattern.exec(strData)) {
+			    // Get the delimiter that was found.
+			    var strMatchedDelimiter = arrMatches[1];
+			    // Check to see if the given delimiter has a length
+			    // (is not the start of string) and if it matches
+			    // field delimiter. If id does not, then we know
+			    // that this delimiter is a row delimiter.
+			    if (strMatchedDelimiter.length && (strMatchedDelimiter != strDelimiter)) {
+			        // Since we have reached a new row of data,
+			        // add an empty row to our data array.
+			        arrData.push([]);
+			    }
+			    // Now that we have our delimiter out of the way,
+			    // let's check to see which kind of value we
+			    // captured (quoted or unquoted).
+			    if (arrMatches[2]) {
+			        // Found a quoted value. When we capture
+			        // this value, unescape any double quotes.
+			        var strMatchedValue = arrMatches[2].replace(
+			        new RegExp("\"\"", "g"), "\"");
+			    } else {
+			        //Found a non-quoted value.
+			        var strMatchedValue = arrMatches[3];
+			    }
+
+			    arrData[arrData.length - 1].push(strMatchedValue);
+			}
+
+			return (arrData);
+		}
+
+		function json2csv(objArray)
+	    {
+	    	//convert json array to csv
+	    	//first check array type
+	        var arr = typeof objArray != 'object' ? JSON.parse(objArray) : objArray;
+	        var str = '';
+
+	        if(!(arr[0] instanceof Array)){
+	        	//if object array first extract the keys to create the first row of the csv
+	        	str = Object.keys(arr[0]) + '\r\n';
+	        }
+	        //parse the rest of the json
+	        for (var i = 0; i < arr.length; i++) {
+	            var line = '';
+
+	            for (var index in arr[i]) {
+	                line += arr[i][index] + ',';
+	            }
+
+	            line = line.slice(0,line.length-1); 
+
+	            str += line + '\r\n';
+	        }
+	        return str;
+	    }
+		
+	</script>
+</head>
+
+<body>
+	<div id="editor">
+		<div id="pane1" class="pane">
+			<div class="header">
+				<div id="logo"><h1>CSV-JSON</h1><p>Converts csv to json <br> and vice versa.</p></div><ul class="tabs"><li id="tab-edit" class="active">CSV</li><li id="tab-array">JSON (Array)</li><li id="tab-object">JSON (Object)</li></ul>
+			</div>
+			<textarea class="io-csv io-area active"></textarea>
+			<textarea class="io-array io-area"></textarea>
+			<textarea class="io-object io-area"></textarea>
+		</div>
+		<div id="pane2" class="pane">
+			<div class="header">
+				<ul class="tabs"><li id="tab-edit">CSV</li><li id="tab-array" class="active">JSON (Array)</li><li id="tab-object">JSON (Object)</li></ul>
+			</div>
+			<textarea class="io-csv io-area"></textarea>
+			<textarea class="io-array io-area active"></textarea>
+			<textarea class="io-object io-area"></textarea>
+		</div>
+	</div>
+</body>
